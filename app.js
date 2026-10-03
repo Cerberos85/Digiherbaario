@@ -1,4 +1,15 @@
 const dbName = "DigiHerbaarioDB";
+// --- Koulujen ja kurssien kasvilistat ---
+const kouluData = {
+  "hatanpaa_7lk": {
+    nimi: "Hatanpään koulu - 7. luokan biologia",
+    kasvit: ["Valkovuokko", "Kielo", "Siankärsämö", "Mustikka", "Voikukka", "Leskenlehti", "Oravanmarja", "Metsätähti"]
+  },
+  "tampere_ammatti": {
+    nimi: "Tampereen Ammattiopisto - Puutarhuri 1",
+    kasvit: ["Rauduskoivu", "Mänty", "Kuusi", "Harmaaleppä", "Pihlaja", "Vaahtera", "Kangasajuruoho", "Piharatamo"]
+  }
+};
 let db;
 
 // 1. Alustetaan IndexedDB-tietokanta
