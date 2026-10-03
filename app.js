@@ -142,10 +142,10 @@ function naytaKasvit() {
 }
 
 // 4. Suojatun PDF:n luominen (jsPDF) - Ammatillinen versio (3 kuvaa/kasvi)
+// PDF:n luonti Web Workerin avulla (Käyttöliittymä ei jäädy!)
 document.getElementById("btn-pdf").addEventListener("click", function() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
+  const pdfNappi = document.getElementById("btn-pdf");
+  
   const transaction = db.transaction(["havainnot"], "readonly");
   const store = transaction.objectStore("havainnot");
   const request = store.getAll();
@@ -157,6 +157,55 @@ document.getElementById("btn-pdf").addEventListener("click", function() {
       return;
     }
 
+    // 1. Muutetaan napin tila latauksen ajaksi
+    const alkuperainenTeksti = pdfNappi.textContent;
+    pdfNappi.textContent = "⏳ Luodaan raporttia (Tämä voi kestää...)";
+    pdfNappi.disabled = true;
+    pdfNappi.style.backgroundColor = "#7f8c8d"; // Harmaannetaan nappi
+
+    // 2. Käynnistetään Web Worker
+    const worker = new Worker('pdf-worker.js');
+
+    // 3. Lähetetään kasvidata Workerille prosessoitavaksi
+    worker.postMessage({ havainnot: kaikkiHavainnot });
+
+    // 4. Odotetaan Workerin vastausta (Kun PDF on valmis)
+    worker.onmessage = function(e) {
+      if (e.data.status === 'valmis') {
+        const pdfBlob = e.data.blob;
+        const tiedostonimi = e.data.tiedostonimi;
+
+        // Luodaan Blob-objektista ladattava URL
+        const blobUrl = URL.createObjectURL(pdfBlob);
+
+        // Luodaan väliaikainen HTML-linkki ja "klikataan" sitä latauksen aloittamiseksi
+        const latausLinkki = document.createElement("a");
+        latausLinkki.href = blobUrl;
+        latausLinkki.download = tiedostonimi;
+        document.body.appendChild(latausLinkki);
+        latausLinkki.click();
+        document.body.removeChild(latausLinkki);
+
+        // Vapautetaan selaimen muisti ja suljetaan worker
+        URL.revokeObjectURL(blobUrl);
+        worker.terminate();
+
+        // Palautetaan nappi normaalitilaan
+        pdfNappi.textContent = alkuperainenTeksti;
+        pdfNappi.disabled = false;
+        pdfNappi.style.backgroundColor = ""; // Palautetaan CSS:n alkuperäinen väri
+      }
+    };
+
+    // Virheenkäsittely
+    worker.onerror = function(err) {
+      alert("Virhe PDF:n luonnissa. Tarkista konsoli.");
+      console.error("Worker error:", err);
+      pdfNappi.textContent = alkuperainenTeksti;
+      pdfNappi.disabled = false;
+    };
+  };
+});
     // --- 1. KANSILEHTI ---
     const keraajanNimi = kaikkiHavainnot[0].oppilas || "Tuntematon kerääjä";
     
