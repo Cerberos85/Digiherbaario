@@ -1,0 +1,203 @@
+/* style.css */
+
+/* Määritellään väriteema ja yleiset muuttujat */
+:root {
+  --primary-color: #2e7d32; /* Luonnonvihreä */
+  --primary-dark: #1b5e20;
+  --bg-color: #f4f7f5; /* Vaalea, hieman vihertävä harmaa tausta */
+  --card-bg: #ffffff;
+  --text-color: #333333;
+  --border-radius: 12px;
+}
+
+/* Nollataan selaimen oletusmarginaalit */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  padding-bottom: 40px; /* Jätetään tilaa vieritykselle mobiilissa */
+}
+
+/* Ylätunniste */
+header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 20px 15px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+
+header p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* Pääsisältö */
+main {
+  padding: 0 15px;
+  max-width: 600px; /* Rajoitetaan leveyttä tableteilla ja tietokoneilla */
+  margin: 0 auto;
+}
+
+section {
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+h2 {
+  font-size: 1.4rem;
+  margin-bottom: 18px;
+  color: var(--primary-dark);
+  border-bottom: 2px solid var(--bg-color);
+  padding-bottom: 10px;
+}
+
+/* --- LOMAKKEEN TYYLIT --- */
+.input-group {
+  margin-bottom: 18px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+/* Isot, helposti kosketettavat kentät */
+.input-group input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #fafafa;
+  transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background-color: #fff;
+}
+
+/* Kameran käyttöpainikkeen tyylitys */
+.input-group input[type="file"] {
+  padding: 12px 10px;
+  background-color: white;
+  border: 1px dashed var(--primary-color);
+  cursor: pointer;
+}
+
+/* Yleiset painiketyylit */
+button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-tallenna {
+  background-color: var(--primary-color);
+  color: white;
+  margin-top: 10px;
+  box-shadow: 0 4px 6px rgba(46, 125, 50, 0.2);
+}
+
+.btn-tallenna:active {
+  background-color: var(--primary-dark);
+}
+
+/* --- KASVILISTAUS JA PDF --- */
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.lista-header h2 {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.btn-pdf {
+  width: auto;
+  background-color: #d35400; /* Oranssi erottuu tallennusnapista */
+  color: white;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  flex-grow: 1; /* Venyttää napin täyteen leveyteen mobiilissa, jos tila loppuu */
+  text-align: center;
+}
+
+/* Tallennettujen kasvien kortit */
+.kasvi-kortti {
+  display: flex;
+  background: var(--bg-color);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+}
+
+.kasvi-kuva {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+}
+
+.kasvi-tiedot {
+  padding: 12px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.kasvi-tiedot h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+}
+
+.kasvi-tiedot p {
+  margin: 0 0 3px 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.tyhja-viesti {
+  text-align: center;
+  color: #777;
+  font-style: italic;
+  padding: 30px 0;
+}
