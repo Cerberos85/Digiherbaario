@@ -201,3 +201,46 @@ button:active {
   font-style: italic;
   padding: 30px 0;
 }
+/* --- KOULUN KASVILISTA & EDISTYMINEN --- */
+select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+#edistymis-nakyma h3 {
+  font-size: 1.1rem;
+  margin: 15px 0 10px 0;
+  color: var(--primary-dark);
+}
+
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Yksittäinen kasvi listassa */
+.kasvi-tag {
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  background-color: #e0e0e0;
+  color: #555;
+  border: 1px solid #ccc;
+  transition: all 0.3s ease;
+}
+
+/* Kun kasvi on kerätty ja tallennettu tietokantaan */
+.kasvi-tag.keratty {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+  text-decoration: line-through; /* Yliviivataan selkeyden vuoksi */
+  opacity: 0.8;
+}
