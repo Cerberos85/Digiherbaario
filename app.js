@@ -141,7 +141,7 @@ function naytaKasvit() {
   };
 }
 
-// 4. Suojatun PDF:n luominen (jsPDF)
+// 4. Suojatun PDF:n luominen (jsPDF) - Ammatillinen versio (3 kuvaa/kasvi)
 document.getElementById("btn-pdf").addEventListener("click", function() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -157,56 +157,84 @@ document.getElementById("btn-pdf").addEventListener("click", function() {
       return;
     }
 
-    // Otsikko
+    // --- 1. KANSILEHTI ---
+    const keraajanNimi = kaikkiHavainnot[0].oppilas || "Tuntematon kerääjä";
+    
     doc.setFont("Helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("DIGITAALINEN HERBAARIO", 14, 20);
-    doc.setFontSize(12);
+    doc.setFontSize(26);
+    doc.text("DIGITAALINEN HERBAARIO", 105, 50, { align: "center" });
+    
     doc.setFont("Helvetica", "normal");
-    doc.text(`Luotu: ${new Date().toLocaleDateString("fi-FI")}`, 14, 28);
-    doc.line(14, 32, 196, 32);
+    doc.setFontSize(14);
+    doc.text(`Kerääjä: ${keraajanNimi}`, 105, 65, { align: "center" });
+    doc.text(`Luotu: ${new Date().toLocaleDateString("fi-FI")}`, 105, 75, { align: "center" });
+    doc.text(`Kasveja yhteensä: ${kaikkiHavainnot.length} kpl`, 105, 85, { align: "center" });
 
-    let yPosition = 40;
-
+    // --- 2. KASVISIVUT (1 kasvi per sivu) ---
     kaikkiHavainnot.forEach((havainto, index) => {
-      if (yPosition > 220) {
-        doc.addPage();
-        yPosition = 20;
+      doc.addPage(); // Uusi sivu jokaista kasvia varten
+      let y = 20;
+
+      // Nimitiedot
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text(`${index + 1}. ${havainto.laji}`, 14, y);
+      
+      // Tieteellinen nimi (kursivoituna), jos se on annettu
+      if (havainto.tieteellinen) {
+        doc.setFont("Helvetica", "italic");
+        doc.setFontSize(14);
+        doc.text(`(${havainto.tieteellinen})`, 14, y + 8);
+        y += 8;
       }
 
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(`${index + 1}. ${havainto.laji}`, 14, yPosition);
-      
+      // Paikka-, aika- ja kerääjätiedot
+      y += 12;
       doc.setFont("Helvetica", "normal");
       doc.setFontSize(11);
-      doc.text(`Löytöpaikka: ${havainto.paikka}`, 14, yPosition + 6);
-      doc.text(`Päivämäärä: ${havainto.pvm}`, 14, yPosition + 12);
+      doc.text(`Sijainti (GPS): ${havainto.sijainti}`, 14, y);
+      doc.text(`Päivämäärä: ${havainto.pvm}`, 14, y + 6);
+      doc.text(`Tallentaja: ${havainto.oppilas}`, 14, y + 12);
 
+      y += 20;
+
+      // KUVAT ASETELTUNA (A4 leveys on 210mm, marginaalit huomioituna tilaa on ~182mm)
       try {
-        // Lisätään kasvin kuva PDF-tiedostoon
-        doc.addImage(havainto.kuva, "JPEG", 14, yPosition + 16, 50, 40);
+        // 1. Yleiskuva (Isona ylhäällä)
+        if (havainto.kuvaYleis) {
+          doc.setFontSize(10);
+          doc.text("1. Yleiskuva / Kasvuympäristö", 14, y);
+          // Parametrit: kuva, formaatti, X, Y, leveys, korkeus
+          doc.addImage(havainto.kuvaYleis, "JPEG", 14, y + 3, 182, 100);
+          y += 110;
+        }
+
+        // 2. ja 3. Runko ja Lehti (Pienempinä vierekkäin alhaalla)
+        if (havainto.kuvaRunko && havainto.kuvaLehti) {
+          doc.text("2. Runko / Varsi", 14, y);
+          doc.text("3. Lehti / Kukka", 110, y);
+          
+          doc.addImage(havainto.kuvaRunko, "JPEG", 14, y + 3, 86, 80);
+          doc.addImage(havainto.kuvaLehti, "JPEG", 110, y + 3, 86, 80);
+        }
       } catch (err) {
-        doc.text("[Kuvan lisääminen epäonnistui]", 14, yPosition + 20);
+        console.error("Virhe kuvien viennissä:", err);
+        doc.text("[Kuvien renderöinti PDF-tiedostoon epäonnistui]", 14, y + 10);
       }
-
-      yPosition += 65;
     });
 
-    // --- PDF:N SUOJAUS ENNEN TALLENNUSTA ---
-    // Asetetaan metadata "read-only"-tilaan ja estetään helppo muokkaus selausohjelmissa
+    // --- 3. PDF:N SUOJAUS JA METADATA ---
     doc.setProperties({
-      title: "Digiherbaario Raportti",
-      subject: "Koulutyö - Ei muokattavissa",
-      author: "Digiherbaario App",
-      creator: "jsPDF"
+      title: `Digiherbaario - ${keraajanNimi}`,
+      subject: "Ammatillinen kasvionäyte - Ei muokattavissa",
+      author: keraajanNimi,
+      creator: "Digiherbaario PWA"
     });
 
-    // Tallennus käyttäjälle
-    doc.save("herbaario-suojattu.pdf");
+    // Tallennus
+    doc.save(`Herbaario_${keraajanNimi.replace(/\s+/g, '_')}.pdf`);
   };
 });
-
 // Rekisteröidään Service Worker offline-tilaa varten
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.log("SW virhe", err));
