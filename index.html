@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digiherbaario</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>🌿 Digiherbaario</h1>
+    <p>Yläasteen kasvikokoelma</p>
+  </header>
+
+  <main>
+    <section id="lomake-section">
+      <h2>Lisää uusi kasvihavainto</h2>
+      <form id="kasvi-lomake">
+        <!-- Uusi kenttä: Oppilaan nimi -->
+        <div class="input-group">
+          <label for="oppilas">Kerääjä (Oma nimesi):</label>
+          <input type="text" id="oppilas" required placeholder="Esim. Matti Meikäläinen">
+        </div>
+        <div class="input-group">
+          <label for="laji">Kasvilaji:</label>
+          <input type="text" id="laji" required placeholder="Em. Valkovuokko">
+        </div>
+        
+        <div class="input-group">
+          <label for="paikka">Löytöpaikka:</label>
+          <input type="text" id="paikka" required placeholder="Koulun lähimetsä">
+        </div>
+
+        <div class="input-group">
+          <label for="pvm">Päivämäärä:</label>
+          <input type="date" id="pvm" required>
+        </div>
+
+        <div class="input-group">
+          <label for="kuva">Ota kuva kasvista:</label>
+          <input type="file" id="kuva" accept="image/*" capture="environment" required>
+        </div>
+
+        <button type="submit" class="btn-tallenna">Tallenna havainto</button>
+      </form>
+    </section>
+
+    <section id="lista-section">
+      <div class="lista-header">
+        <h2>Omat havainnot</h2>
+        <button id="btn-pdf" class="btn-pdf">Lataa suojattu PDF</button>
+      </div>
+      <div id="kasvilista">
+        <p class="tyhja-viesti">Ei vielä tallennettuja kasveja. Lähde maastoon!</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
