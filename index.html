@@ -6,17 +6,16 @@
   <title>Digiherbaario</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
   <header>
     <h1>🌿 Digiherbaario</h1>
-    <p>Yläasteen kasvikokoelma</p>
+    <p>Ammatillinen kasvikokoelma</p>
   </header>
 
   <main>
-    <!-- UUSI: Koulun ja tehtävän valinta -->
+    <!-- Koulun ja tehtävän valinta -->
     <section id="koulu-section">
       <h2>1. Valitse tehtävä</h2>
       <div class="input-group">
@@ -28,33 +27,32 @@
         </select>
       </div>
       
-      <!-- Edistymisnäkymä (Piilotettu oletuksena, näytetään kun koulu valittu) -->
+      <!-- Edistymisnäkymä -->
       <div id="edistymis-nakyma" style="display: none;">
         <h3>Kerätty: <span id="keratty-lkm">0</span> / <span id="yhteensa-lkm">0</span></h3>
-        <div id="kasvi-tagit" class="tag-container">
-          <!-- Kasvitulokset renderöidään tänne JavaScriptillä -->
-        </div>
+        <div id="kasvi-tagit" class="tag-container"></div>
       </div>
     </section>
+
+    <!-- Kasvin lisäyslomake -->
     <section id="lomake-section">
-      <h2>Lisää uusi kasvihavainto</h2>
+      <h2>2. Lisää uusi kasvihavainto</h2>
       <form id="kasvi-lomake">
-        <!-- Uusi kenttä: Oppilaan nimi -->
-        <div class="input-group">
-          <label for="oppilas">Kerääjä (Oma nimesi):</label>
-          <input type="text" id="oppilas" required placeholder="Esim. Matti Meikäläinen">
-        </div>
+        
         <div class="input-group">
           <label for="laji">Kasvilaji (Suomeksi):</label>
           <input type="text" id="laji" list="kasvi-ehdotukset" required placeholder="Esim. Valkovuokko">
-          <datalist id="kasvi-ehdotukset">
-            <!-- Ehdotukset päivitetään dynaamisesti JS:n avulla -->
-          </datalist>
+          <datalist id="kasvi-ehdotukset"></datalist>
         </div>
         
         <div class="input-group">
-          <label for="paikka">Löytöpaikka:</label>
-          <input type="text" id="paikka" required placeholder="Koulun lähimetsä">
+          <label for="tieteellinen">Tieteellinen nimi (Vapaaehtoinen):</label>
+          <input type="text" id="tieteellinen" placeholder="Esim. Anemone nemorosa">
+        </div>
+
+        <div class="input-group">
+          <label for="oppilas">Kerääjä (Oma nimesi):</label>
+          <input type="text" id="oppilas" required placeholder="Esim. Matti Meikäläinen">
         </div>
 
         <div class="input-group">
@@ -63,26 +61,49 @@
         </div>
 
         <div class="input-group">
-          <label for="kuva">Ota kuva kasvista:</label>
-          <input type="file" id="kuva" accept="image/*" capture="environment" required>
-        </div>
-<!-- UUSI: Edistymisen seuranta kuvien tallennuksessa -->
-        <div id="edistymis-info" style="display: none; color: #2e7d32; font-weight: bold; margin-bottom: 10px; text-align: center; padding: 10px; background-color: #e8f5e9; border-radius: 8px;">
-          Valmiina tallentamaan...
+          <label>Tarkka sijainti (GPS):</label>
+          <button type="button" id="btn-gps" class="btn-gps">📍 Hae nykyinen sijainti</button>
+          <p id="gps-tulos" class="gps-tulos-teksti">Sijaintia ei haettu.</p>
+          <input type="hidden" id="lat">
+          <input type="hidden" id="lng">
         </div>
 
-        <button type="submit" class="btn-tallenna">Tallenna havainto</button>
-        <button type="submit" class="btn-tallenna">Tallenna havainto</button>
+        <h3 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Kuvat (3 kpl)</h3>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Ota kuvat yksitellen. Selain käsittelee kuvan heti oton jälkeen.</p>
+
+        <!-- Kuva 1 -->
+        <div class="input-group">
+          <label for="kuva-yleis">1. Yleiskuva (Kasvi elinympäristössä):</label>
+          <input type="file" id="kuva-yleis" accept="image/*" capture="environment" required>
+          <div id="status-yleis" style="margin-top: 5px; font-weight: bold; font-size: 0.9rem; color: #2e7d32;"></div>
+        </div>
+
+        <!-- Kuva 2 -->
+        <div class="input-group">
+          <label for="kuva-runko">2. Kuva rungosta tai varresta:</label>
+          <input type="file" id="kuva-runko" accept="image/*" capture="environment" required>
+          <div id="status-runko" style="margin-top: 5px; font-weight: bold; font-size: 0.9rem; color: #2e7d32;"></div>
+        </div>
+
+        <!-- Kuva 3 -->
+        <div class="input-group">
+          <label for="kuva-lehti">3. Kuva lehdestä ja/tai kukasta:</label>
+          <input type="file" id="kuva-lehti" accept="image/*" capture="environment" required>
+          <div id="status-lehti" style="margin-top: 5px; font-weight: bold; font-size: 0.9rem; color: #2e7d32;"></div>
+        </div>
+
+        <button type="submit" class="btn-tallenna" id="btn-tallenna">Tallenna havainto</button>
       </form>
     </section>
 
+    <!-- Havaintojen listaus ja PDF-toiminnot -->
     <section id="lista-section">
       <div class="lista-header">
         <h2>Omat havainnot</h2>
         <button id="btn-pdf" class="btn-pdf">Lataa suojattu PDF</button>
       </div>
       <div id="kasvilista">
-        <p class="tyhja-viesti">Ei vielä tallennettuja kasveja. Lähde maastoon!</p>
+        <p class="tyhja-viesti">Ei vielä tallennettuja kasveja.</p>
       </div>
     </section>
   </main>
