@@ -15,7 +15,7 @@ const kouluData = {
   }
 };
 
-// Tilamuuttuja, johon valmiiksi käsitellyt kuvat tallennetaan lennosta
+// Objekti, joka pitää kirjaa lennosta käsitellyistä kuvista
 let kasitellytKuvat = {
   yleis: null,
   runko: null,
@@ -140,8 +140,7 @@ document.getElementById('btn-gps').addEventListener('click', () => {
   }
 });
 
-// --- 4. KUVIEN YKSITTÄINEN KÄSITTELY LENNOSTA ---
-// Funktio, joka asettaa kuuntelijan halutulle inputille
+// --- 4. KUVIEN YKSITTÄINEN KÄSITTELY (CANVAS) ---
 function asetaKuvanKuuntelija(inputId, statusId, avain) {
   const inputElem = document.getElementById(inputId);
   const statusElem = document.getElementById(statusId);
@@ -150,12 +149,14 @@ function asetaKuvanKuuntelija(inputId, statusId, avain) {
     const tiedosto = e.target.files[0];
     if (!tiedosto) return;
 
-    // Haetaan kerääjän nimi vesileimaa varten (tai "Tuntematon", jos tyhjä)
+    // Haetaan kerääjän nimi vesileimaa varten
     let oppilas = document.getElementById("oppilas").value || "Tuntematon";
 
     statusElem.textContent = "⏳ Käsitellään...";
     statusElem.style.color = "#d35400";
-    document.getElementById("btn-tallenna").disabled = true; // Estetään tallennus käsittelyn ajaksi
+    
+    // Estetään lomakkeen lähettäminen, kun kuva on käsittelyssä
+    document.getElementById("btn-tallenna").disabled = true; 
 
     try {
       const base64Kuva = await prosessoiKuva(tiedosto, oppilas);
@@ -163,22 +164,21 @@ function asetaKuvanKuuntelija(inputId, statusId, avain) {
       statusElem.textContent = "✅ Valmis!";
       statusElem.style.color = "#2e7d32";
     } catch (err) {
-      console.error(err);
+      console.error("Virhe kuvan prosessoinnissa:", err);
       statusElem.textContent = "❌ Käsittely epäonnistui.";
       statusElem.style.color = "red";
+      kasitellytKuvat[avain] = null;
     } finally {
       document.getElementById("btn-tallenna").disabled = false;
     }
   });
 }
 
-// Asetetaan kuuntelijat jokaiselle 3 kuvalle
+// Asetetaan välitön käsittely jokaiseen kuvasyötteeseen
 asetaKuvanKuuntelija("kuva-yleis", "status-yleis", "yleis");
 asetaKuvanKuuntelija("kuva-runko", "status-runko", "runko");
 asetaKuvanKuuntelija("kuva-lehti", "status-lehti", "lehti");
 
-
-// Kuvan prosessointilogiikka (Canvas + vesileima)
 function prosessoiKuva(tiedosto, oppilas) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -223,14 +223,12 @@ function prosessoiKuva(tiedosto, oppilas) {
   });
 }
 
-
 // --- 5. HAVAINNON LOPULLINEN TALLENNUS ---
 document.getElementById("kasvi-lomake").addEventListener("submit", function(e) {
   e.preventDefault();
 
-  // Varmistetaan, että kaikki 3 kuvaa on otettu ja käsitelty onnistuneesti
   if (!kasitellytKuvat.yleis || !kasitellytKuvat.runko || !kasitellytKuvat.lehti) {
-    alert("Ota kaikki kolme kuvaa ennen tallentamista!");
+    alert("Odotathan, että kaikki kolme kuvaa on käsitelty ja merkitty valmiiksi!");
     return;
   }
 
@@ -261,7 +259,7 @@ document.getElementById("kasvi-lomake").addEventListener("submit", function(e) {
   requestAdd.onsuccess = function() {
     document.getElementById("kasvi-lomake").reset();
     
-    // Nollataan tilamuuttuja ja statustekstit uutta kasvia varten
+    // Nollataan välimuisti ja UI
     kasitellytKuvat = { yleis: null, runko: null, lehti: null };
     document.getElementById("status-yleis").textContent = "";
     document.getElementById("status-runko").textContent = "";
@@ -275,7 +273,7 @@ document.getElementById("kasvi-lomake").addEventListener("submit", function(e) {
   };
 });
 
-// --- 6. TALLENNETTUJEN KASVIEN LISTAUS UI:HIN ---
+// --- 6. TALLENNETTUJEN KASVIEN LISTAUS ---
 function naytaKasvit() {
   const kasvilista = document.getElementById("kasvilista");
   if(!kasvilista) return;
@@ -361,7 +359,7 @@ document.getElementById("btn-pdf").addEventListener("click", function() {
   };
 });
 
-// --- 8. SERVICE WORKER REKISTERÖINTI ---
+// --- 8. SERVICE WORKER ---
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.log("SW virhe", err));
 }
