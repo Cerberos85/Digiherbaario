@@ -15,6 +15,13 @@ const kouluData = {
   }
 };
 
+// Tilamuuttuja, johon valmiiksi käsitellyt kuvat tallennetaan lennosta
+let kasitellytKuvat = {
+  yleis: null,
+  runko: null,
+  lehti: null
+};
+
 // --- 1. TIETOKANNAN ALUSTUS (IndexedDB) ---
 const request = indexedDB.open(dbName, 1);
 
@@ -35,7 +42,7 @@ request.onerror = function(e) {
   console.error("Tietokantavirhe:", e.target.error);
 };
 
-// --- 2. KOULULISTAN JA EDISTYMISEN LOGIIKKA ---
+// --- 2. KOULULISTAN LOGIIKKA ---
 document.getElementById("koulu-valinta").addEventListener("change", function(e) {
   const valittuKoulu = e.target.value;
   localStorage.setItem("valittuKoulu", valittuKoulu);
@@ -48,9 +55,7 @@ function paivitaEdistyminen() {
   const selectElem = document.getElementById("koulu-valinta");
   const datalist = document.getElementById("kasvi-ehdotukset");
 
-  if (valittuKoulu) {
-    selectElem.value = valittuKoulu;
-  }
+  if (valittuKoulu) selectElem.value = valittuKoulu;
 
   if (!valittuKoulu || !kouluData[valittuKoulu]) {
     nakyma.style.display = "none";
@@ -101,154 +106,179 @@ function paivitaEdistyminen() {
   };
 }
 
-// --- 3. LOMAKKEEN ESI-TÄYTTÖ JA GPS-PAIKANNUS ---
+// --- 3. PÄIVÄMÄÄRÄ, NIMI JA GPS ---
 window.addEventListener("DOMContentLoaded", () => {
   const tanaan = new Date().toISOString().split('T')[0];
-  const pvmKentta = document.getElementById("pvm");
-  if(pvmKentta) pvmKentta.value = tanaan;
+  document.getElementById("pvm").value = tanaan;
   
   const tallennettuNimi = localStorage.getItem("oppilaanNimi");
-  const oppilasKentta = document.getElementById("oppilas");
-  if (tallennettuNimi && oppilasKentta) {
-    oppilasKentta.value = tallennettuNimi;
+  if (tallennettuNimi) {
+    document.getElementById("oppilas").value = tallennettuNimi;
   }
 });
 
-const btnGps = document.getElementById('btn-gps');
-if(btnGps) {
-  btnGps.addEventListener('click', () => {
-    const tulos = document.getElementById('gps-tulos');
-    tulos.textContent = "Haetaan sijaintia...";
-    
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          document.getElementById('lat').value = pos.coords.latitude;
-          document.getElementById('lng').value = pos.coords.longitude;
-          tulos.textContent = `✅ Sijainti lukittu: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-          tulos.style.color = "green";
-        },
-        (err) => {
-          tulos.textContent = "❌ Paikannus epäonnistui. Varmista sijaintiluvat.";
-          tulos.style.color = "red";
-        },
-        { enableHighAccuracy: true }
-      );
-    } else {
-      tulos.textContent = "Selaimesi ei tue paikannusta.";
+document.getElementById('btn-gps').addEventListener('click', () => {
+  const tulos = document.getElementById('gps-tulos');
+  tulos.textContent = "Haetaan sijaintia...";
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.getElementById('lat').value = pos.coords.latitude;
+        document.getElementById('lng').value = pos.coords.longitude;
+        tulos.textContent = `✅ Sijainti lukittu: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        tulos.style.color = "green";
+      },
+      () => {
+        tulos.textContent = "❌ Paikannus epäonnistui.";
+        tulos.style.color = "red";
+      },
+      { enableHighAccuracy: true }
+    );
+  } else {
+    tulos.textContent = "Selain ei tue paikannusta.";
+  }
+});
+
+// --- 4. KUVIEN YKSITTÄINEN KÄSITTELY LENNOSTA ---
+// Funktio, joka asettaa kuuntelijan halutulle inputille
+function asetaKuvanKuuntelija(inputId, statusId, avain) {
+  const inputElem = document.getElementById(inputId);
+  const statusElem = document.getElementById(statusId);
+
+  inputElem.addEventListener("change", async function(e) {
+    const tiedosto = e.target.files[0];
+    if (!tiedosto) return;
+
+    // Haetaan kerääjän nimi vesileimaa varten (tai "Tuntematon", jos tyhjä)
+    let oppilas = document.getElementById("oppilas").value || "Tuntematon";
+
+    statusElem.textContent = "⏳ Käsitellään...";
+    statusElem.style.color = "#d35400";
+    document.getElementById("btn-tallenna").disabled = true; // Estetään tallennus käsittelyn ajaksi
+
+    try {
+      const base64Kuva = await prosessoiKuva(tiedosto, oppilas);
+      kasitellytKuvat[avain] = base64Kuva;
+      statusElem.textContent = "✅ Valmis!";
+      statusElem.style.color = "#2e7d32";
+    } catch (err) {
+      console.error(err);
+      statusElem.textContent = "❌ Käsittely epäonnistui.";
+      statusElem.style.color = "red";
+    } finally {
+      document.getElementById("btn-tallenna").disabled = false;
     }
   });
 }
 
-// --- 4. HAVAINNON TALLENNUS JA KUVIEN VESILEIMAUS (3 KUVAA) ---
-document.getElementById("kasvi-lomake").addEventListener("submit", function(e) {
-  e.preventDefault();
+// Asetetaan kuuntelijat jokaiselle 3 kuvalle
+asetaKuvanKuuntelija("kuva-yleis", "status-yleis", "yleis");
+asetaKuvanKuuntelija("kuva-runko", "status-runko", "runko");
+asetaKuvanKuuntelija("kuva-lehti", "status-lehti", "lehti");
 
-  const laji = document.getElementById("laji").value;
-  const tieteellinen = document.getElementById("tieteellinen") ? document.getElementById("tieteellinen").value : "";
-  const pvm = document.getElementById("pvm").value;
-  const oppilas = document.getElementById("oppilas").value;
-  const lat = document.getElementById("lat") ? document.getElementById("lat").value : "";
-  const lng = document.getElementById("lng") ? document.getElementById("lng").value : "";
-  
-  localStorage.setItem("oppilaanNimi", oppilas);
 
-  const kuva1 = document.getElementById("kuva-yleis").files[0];
-  const kuva2 = document.getElementById("kuva-runko").files[0];
-  const kuva3 = document.getElementById("kuva-lehti").files[0];
-
-  const tallennaNappi = document.querySelector(".btn-tallenna");
-  tallennaNappi.textContent = "Käsitellään kuvia...";
-  tallennaNappi.disabled = true;
-
-  // Vesileimataan kaikki 3 kuvaa samanaikaisesti
-  Promise.all([
-    prosessoiKuva(kuva1, oppilas),
-    prosessoiKuva(kuva2, oppilas),
-    prosessoiKuva(kuva3, oppilas)
-  ]).then((kuvatBase64) => {
-    
-    const uusiHavainto = {
-      laji: laji,
-      tieteellinen: tieteellinen,
-      pvm: pvm,
-      oppilas: oppilas,
-      sijainti: (lat && lng) ? `${lat}, ${lng}` : "Ei GPS-tietoa",
-      kuvaYleis: kuvatBase64[0],
-      kuvaRunko: kuvatBase64[1],
-      kuvaLehti: kuvatBase64[2]
-    };
-
-    const transaction = db.transaction(["havainnot"], "readwrite");
-    const store = transaction.objectStore("havainnot");
-    const requestAdd = store.add(uusiHavainto);
-
-    requestAdd.onsuccess = function() {
-      document.getElementById("kasvi-lomake").reset();
-      
-      // Palautetaan nappi ja lomakkeen tiedot normaaleiksi
-      tallennaNappi.textContent = "Tallenna havainto";
-      tallennaNappi.disabled = false;
-      const gpsTulos = document.getElementById("gps-tulos");
-      if(gpsTulos) {
-        gpsTulos.textContent = "Sijaintia ei haettu.";
-        gpsTulos.style.color = "#666";
-      }
-      
-      naytaKasvit();
-      paivitaEdistyminen();
-      alert("Kasvi tallennettu onnistuneesti puhelimesi muistiin!");
-    };
-  });
-});
-
-// Funktio, joka palauttaa Promisen: lukee, skaalaa ja vesileimaa yhden kuvan
+// Kuvan prosessointilogiikka (Canvas + vesileima)
 function prosessoiKuva(tiedosto, oppilas) {
-  return new Promise((resolve) => {
-    if (!tiedosto) return resolve(null);
-
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = function() {
       const img = new Image();
       img.onload = function() {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
 
-        const MAX_WIDTH = 1000;
-        let width = img.width;
-        let height = img.height;
+          const MAX_WIDTH = 1000;
+          let width = img.width;
+          let height = img.height;
 
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const tarkkaAika = new Date().toLocaleString("fi-FI");
+          const vesileimaTeksti = `${oppilas} | ${tarkkaAika}`;
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+          ctx.fillRect(0, height - 50, width, 50);
+          ctx.font = "bold 24px Arial";
+          ctx.fillStyle = "white";
+          ctx.fillText(vesileimaTeksti, 15, height - 17);
+
+          resolve(canvas.toDataURL("image/jpeg", 0.7)); 
+        } catch(e) {
+          reject(e);
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const tarkkaAika = new Date().toLocaleString("fi-FI");
-        const vesileimaTeksti = `${oppilas} | ${tarkkaAika}`;
-
-        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-        ctx.fillRect(0, height - 50, width, 50);
-        ctx.font = "bold 24px Arial";
-        ctx.fillStyle = "white";
-        ctx.fillText(vesileimaTeksti, 15, height - 17);
-
-        resolve(canvas.toDataURL("image/jpeg", 0.7)); // Palautetaan pakattuna
       };
       img.src = reader.result;
     };
+    reader.onerror = reject;
     reader.readAsDataURL(tiedosto);
   });
 }
 
-// --- 5. TALLENNETTUJEN KASVIEN LISTAUS UI:HIN ---
+
+// --- 5. HAVAINNON LOPULLINEN TALLENNUS ---
+document.getElementById("kasvi-lomake").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  // Varmistetaan, että kaikki 3 kuvaa on otettu ja käsitelty onnistuneesti
+  if (!kasitellytKuvat.yleis || !kasitellytKuvat.runko || !kasitellytKuvat.lehti) {
+    alert("Ota kaikki kolme kuvaa ennen tallentamista!");
+    return;
+  }
+
+  const laji = document.getElementById("laji").value;
+  const tieteellinen = document.getElementById("tieteellinen").value;
+  const pvm = document.getElementById("pvm").value;
+  const oppilas = document.getElementById("oppilas").value;
+  const lat = document.getElementById("lat").value;
+  const lng = document.getElementById("lng").value;
+  
+  localStorage.setItem("oppilaanNimi", oppilas);
+
+  const uusiHavainto = {
+    laji: laji,
+    tieteellinen: tieteellinen,
+    pvm: pvm,
+    oppilas: oppilas,
+    sijainti: (lat && lng) ? `${lat}, ${lng}` : "Ei GPS-tietoa",
+    kuvaYleis: kasitellytKuvat.yleis,
+    kuvaRunko: kasitellytKuvat.runko,
+    kuvaLehti: kasitellytKuvat.lehti
+  };
+
+  const transaction = db.transaction(["havainnot"], "readwrite");
+  const store = transaction.objectStore("havainnot");
+  const requestAdd = store.add(uusiHavainto);
+
+  requestAdd.onsuccess = function() {
+    document.getElementById("kasvi-lomake").reset();
+    
+    // Nollataan tilamuuttuja ja statustekstit uutta kasvia varten
+    kasitellytKuvat = { yleis: null, runko: null, lehti: null };
+    document.getElementById("status-yleis").textContent = "";
+    document.getElementById("status-runko").textContent = "";
+    document.getElementById("status-lehti").textContent = "";
+    document.getElementById("gps-tulos").textContent = "Sijaintia ei haettu.";
+    document.getElementById("gps-tulos").style.color = "#666";
+    
+    naytaKasvit();
+    paivitaEdistyminen();
+    alert("✅ Kasvi tallennettu onnistuneesti!");
+  };
+});
+
+// --- 6. TALLENNETTUJEN KASVIEN LISTAUS UI:HIN ---
 function naytaKasvit() {
   const kasvilista = document.getElementById("kasvilista");
   if(!kasvilista) return;
-  
   kasvilista.innerHTML = "";
 
   const transaction = db.transaction(["havainnot"], "readonly");
@@ -266,26 +296,23 @@ function naytaKasvit() {
       const div = document.createElement("div");
       div.className = "kasvi-kortti";
       
-      // Näytetään UI-listassa pelkkä yleiskuva esikatseluna
-      const kuva = havainto.kuvaYleis || havainto.kuva; // Fallback jos vanhaa dataa
-      
       div.innerHTML = `
-        <img src="${kuva}" alt="${havainto.laji}" class="kasvi-kuva">
+        <img src="${havainto.kuvaYleis}" alt="${havainto.laji}" class="kasvi-kuva">
         <div class="kasvi-tiedot">
           <h3>${havainto.laji}</h3>
-          <p>📍 ${havainto.sijainti || havainto.paikka}</p>
+          <p>📍 ${havainto.sijainti}</p>
           <p>📅 ${havainto.pvm}</p>
         </div>
       `;
       kasvilista.appendChild(div);
       cursor.continue();
     } else if (!onKasveja) {
-      kasvilista.innerHTML = '<p class="tyhja-viesti">Ei vielä tallennettuja kasveja. Lähde maastoon!</p>';
+      kasvilista.innerHTML = '<p class="tyhja-viesti">Ei vielä tallennettuja kasveja.</p>';
     }
   };
 }
 
-// --- 6. PDF:N LUONTI (WEB WORKER) ---
+// --- 7. PDF:N LUONTI (WEB WORKER) ---
 document.getElementById("btn-pdf").addEventListener("click", function() {
   const pdfNappi = document.getElementById("btn-pdf");
   
@@ -301,29 +328,22 @@ document.getElementById("btn-pdf").addEventListener("click", function() {
     }
 
     const alkuperainenTeksti = pdfNappi.textContent;
-    pdfNappi.textContent = "⏳ Luodaan raporttia (Tämä voi kestää...)";
+    pdfNappi.textContent = "⏳ Luodaan raporttia...";
     pdfNappi.disabled = true;
     pdfNappi.style.backgroundColor = "#7f8c8d"; 
 
-    // Oletetaan, että pdf-worker.js on samassa kansiossa!
     const worker = new Worker('pdf-worker.js');
-
     worker.postMessage({ havainnot: kaikkiHavainnot });
 
     worker.onmessage = function(e) {
       if (e.data.status === 'valmis') {
-        const pdfBlob = e.data.blob;
-        const tiedostonimi = e.data.tiedostonimi;
-
-        const blobUrl = URL.createObjectURL(pdfBlob);
-
+        const blobUrl = URL.createObjectURL(e.data.blob);
         const latausLinkki = document.createElement("a");
         latausLinkki.href = blobUrl;
-        latausLinkki.download = tiedostonimi;
+        latausLinkki.download = e.data.tiedostonimi;
         document.body.appendChild(latausLinkki);
         latausLinkki.click();
         document.body.removeChild(latausLinkki);
-
         URL.revokeObjectURL(blobUrl);
         worker.terminate();
 
@@ -334,15 +354,14 @@ document.getElementById("btn-pdf").addEventListener("click", function() {
     };
 
     worker.onerror = function(err) {
-      alert("Virhe PDF:n luonnissa. Tarkista konsoli. (Varmista, että käytät lokaalia palvelinta, ei file:// protokollaa)");
-      console.error("Worker error:", err);
+      alert("Virhe PDF:n luonnissa. Tarkista konsoli.");
       pdfNappi.textContent = alkuperainenTeksti;
       pdfNappi.disabled = false;
     };
   };
 });
 
-// --- 7. SERVICE WORKER REKISTERÖINTI (OFFLINE-TUKI) ---
+// --- 8. SERVICE WORKER REKISTERÖINTI ---
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.log("SW virhe", err));
 }
