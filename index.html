@@ -66,7 +66,12 @@
           <label for="kuva">Ota kuva kasvista:</label>
           <input type="file" id="kuva" accept="image/*" capture="environment" required>
         </div>
+<!-- UUSI: Edistymisen seuranta kuvien tallennuksessa -->
+        <div id="edistymis-info" style="display: none; color: #2e7d32; font-weight: bold; margin-bottom: 10px; text-align: center; padding: 10px; background-color: #e8f5e9; border-radius: 8px;">
+          Valmiina tallentamaan...
+        </div>
 
+        <button type="submit" class="btn-tallenna">Tallenna havainto</button>
         <button type="submit" class="btn-tallenna">Tallenna havainto</button>
       </form>
     </section>
