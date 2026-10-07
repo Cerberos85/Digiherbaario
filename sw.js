@@ -1,7 +1,7 @@
 /* sw.js - Service Worker offline-tukea varten */
 
 // Välimuistin nimi. Kun teet päivityksiä sovellukseen, vaihda versionumeroa (esim. v2).
-const CACHE_NAME = 'herbaario-v1';
+const CACHE_NAME = 'herbaario-v2'
 
 // Tiedostot, jotka ladataan laitteen muistiin offline-käyttöä varten
 const ASSETS_TO_CACHE = [
