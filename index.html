@@ -15,7 +15,7 @@
   </header>
 
   <main>
-    <!-- Koulun ja tehtävän valinta -->
+    <!-- 1. Koulun ja tehtävän valinta -->
     <section id="koulu-section">
       <h2>1. Valitse tehtävä</h2>
       <div class="input-group">
@@ -34,7 +34,7 @@
       </div>
     </section>
 
-    <!-- Kasvin lisäyslomake -->
+    <!-- 2. Kasvin lisäyslomake -->
     <section id="lomake-section">
       <h2>2. Lisää uusi kasvihavainto</h2>
       <form id="kasvi-lomake">
@@ -68,46 +68,29 @@
           <input type="hidden" id="lng">
         </div>
 
-        <h3 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Kuvat (3 kpl)</h3>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Kuva käsitellään automaattisesti välittömästi oton jälkeen. Odota vihreää kuittausta ennen seuraavan ottamista.</p>
+        <!-- 3. Kuvavalikko kustomoiduilla painikkeilla -->
+        <h3 style="margin: 20px 0 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Kuvavalikko (3 kpl)</h3>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Klikkaa valikosta, minkä kuvan haluat ottaa. Selain käsittelee kuvan automaattisesti.</p>
 
-        <!-- Kuva 1 -->
-        <div class="input-group">
-          <label for="kuva-yleis">1. Yleiskuva (Kasvi elinympäristössä):</label>
-          <input type="file" id="kuva-yleis" accept="image/*" capture="environment" required>
-          <div id="status-yleis" style="margin-top: 5px; font-weight: bold; font-size: 0.9rem;"></div>
-        </div>
+        <div class="kamera-valikko">
+          <!-- Yleiskuva -->
+          <div>
+            <button type="button" class="btn-kamera" id="btn-kamera-yleis">
+              <span>📷 1. Ota Yleiskuva (Elinympäristö)</span>
+            </button>
+            <input type="file" id="kuva-yleis" accept="image/*" capture="environment" style="display: none;" required>
+            <div id="status-yleis" class="kuva-status"></div>
+          </div>
 
-        <!-- Kuva 2 -->
-        <div class="input-group">
-          <label for="kuva-runko">2. Kuva rungosta tai varresta:</label>
-          <input type="file" id="kuva-runko" accept="image/*" capture="environment" required>
-          <div id="status-runko" style="margin-top: 5px; font-weight: bold; font-size: 0.9rem;"></div>
-        </div>
+          <!-- Runkokuva -->
+          <div>
+            <button type="button" class="btn-kamera" id="btn-kamera-runko">
+              <span>📷 2. Ota kuva rungosta/varresta</span>
+            </button>
+            <input type="file" id="kuva-runko" accept="image/*" capture="environment" style="display: none;" required>
+            <div id="status-runko" class="kuva-status"></div>
+          </div>
 
-        <!-- Kuva 3 -->
-        <div class="input-group">
-          <label for="kuva-lehti">3. Kuva lehdestä ja/tai kukasta:</label>
-          <input type="file" id="kuva-lehti" accept="image/*" capture="environment" required>
-          <div id="status-lehti" style="margin-top: 5px; font-weight: bold; font-size: 0.9rem;"></div>
-        </div>
-
-        <button type="submit" class="btn-tallenna" id="btn-tallenna">Tallenna havainto</button>
-      </form>
-    </section>
-
-    <!-- Havaintojen listaus ja PDF-toiminnot -->
-    <section id="lista-section">
-      <div class="lista-header">
-        <h2>Omat havainnot</h2>
-        <button id="btn-pdf" class="btn-pdf">Lataa suojattu PDF</button>
-      </div>
-      <div id="kasvilista">
-        <p class="tyhja-viesti">Ei vielä tallennettuja kasveja.</p>
-      </div>
-    </section>
-  </main>
-
-  <script src="app.js"></script>
-</body>
-</html>
+          <!-- Lehti/kukkakuva -->
+          <div>
+            <button type="button" class="btn-kamera" id="btn-kamera-lehti
