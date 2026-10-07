@@ -244,3 +244,37 @@ select {
   text-decoration: line-through; /* Yliviivataan selkeyden vuoksi */
   opacity: 0.8;
 }
+
+/* --- KAMERAVALIKON TYYLIT --- */
+.kamera-valikko {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.btn-kamera {
+  background-color: #f9f9f9;
+  color: #333;
+  border: 2px dashed var(--primary-color);
+  padding: 18px 15px;
+  font-size: 1.05rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Tyyli, kun kuva on otettu ja käsitelty onnistuneesti */
+.btn-kamera.valmis {
+  background-color: #e8f5e9;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-dark);
+}
+
+.kuva-status {
+  margin-top: 5px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
